@@ -15,7 +15,11 @@
         <header>
             <h2>JC Central de Mídia</h2>
             <div class="config-folder">
-                <input type="text" id="folderPath" placeholder="Cole o caminho da pasta (Ex: C:\Trilhas)" />
+                <div class="folder-picker-group">
+                    <!-- Colocamos 'readonly' para o usuário não precisar digitar -->
+                    <input type="text" id="folderPath" placeholder="Nenhuma pasta selecionada..." readonly />
+                    <button id="btnBrowse" title="Procurar Pasta">📁</button>
+                </div>
                 <button id="btnLoad">Carregar Arquivos</button>
             </div>
         </header>

@@ -101,3 +101,27 @@ audio {
 .btn-insert:hover {
     background-color: #45a049;
 }
+
+/* Estilos para o novo seletor de pastas */
+.folder-picker-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.folder-picker-group input[type="text"] {
+    margin-bottom: 0; /* Remove a margem antiga para alinhar com o botão */
+    flex: 1; /* Faz o input ocupar todo o espaço restante */
+    background-color: #2a2a2a;
+    color: #888;
+}
+
+#btnBrowse {
+    width: auto;
+    background-color: #333;
+    border: 1px solid #444;
+}
+
+#btnBrowse:hover {
+    background-color: #444;
+}

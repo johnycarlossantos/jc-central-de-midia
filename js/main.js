@@ -9,6 +9,21 @@ const csInterface = new CSInterface();
 
 // Captura os elementos do nosso HTML
 const folderInput = document.getElementById('folderPath');
+const btnBrowse = document.getElementById('btnBrowse');
+
+// Abre a janela do Windows/Mac para escolher a pasta
+btnBrowse.addEventListener('click', () => {
+    // Parâmetros: (MúltiplosArquivos, EscolherDiretório, Título, CaminhoInicial, TiposDeArquivo)
+    const result = window.cep.fs.showOpenDialog(false, true, "Selecione a pasta de mídia", "", [""]);
+    
+    // Se o usuário selecionou uma pasta (e não clicou em cancelar)
+    if (result.data && result.data.length > 0) {
+        folderInput.value = result.data[0]; // Preenche o input com o caminho
+        
+        // Opcional: Já simula um clique no botão "Carregar" automaticamente!
+        btnLoad.click(); 
+    }
+});
 const btnLoad = document.getElementById('btnLoad');
 const searchInput = document.getElementById('searchInput');
 const resultsGrid = document.getElementById('resultsGrid');
