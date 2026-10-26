@@ -16,10 +16,15 @@
             <h2>JC Central de Mídia</h2>
             <div class="config-folder">
                 <div class="folder-picker-group">
-                    <!-- Colocamos 'readonly' para o usuário não precisar digitar -->
                     <input type="text" id="folderPath" placeholder="Nenhuma pasta selecionada..." readonly />
                     <button id="btnBrowse" title="Procurar Pasta">📁</button>
+                    <!-- Novo botão de favorito -->
+                    <button id="btnFav" title="Salvar como Favorita">⭐</button> 
                 </div>
+                
+                <!-- Área onde as tags dos favoritos serão injetadas -->
+                <div id="favoritesList" class="favorites-list"></div>
+                
                 <button id="btnLoad">Carregar Arquivos</button>
             </div>
         </header>

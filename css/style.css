@@ -134,3 +134,53 @@ audio {
     background-color: #000;
     border-radius: 4px;
 }
+
+/* Estilo do botão de Favoritar */
+#btnFav {
+    width: auto;
+    background-color: #333;
+    border: 1px solid #444;
+}
+#btnFav:hover {
+    background-color: #444;
+}
+
+/* Container dos favoritos */
+.favorites-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+/* Visual das "tags" de pastas favoritas */
+.fav-chip {
+    background-color: #3a3a3a;
+    color: #ccc;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #555;
+}
+
+.fav-chip span.fav-name {
+    cursor: pointer;
+}
+.fav-chip span.fav-name:hover {
+    color: #fff;
+}
+
+/* O botão de "X" para remover o favorito */
+.fav-remove {
+    color: #ff6b6b;
+    font-weight: bold;
+    cursor: pointer;
+    padding-left: 4px;
+    border-left: 1px solid #555;
+}
+.fav-remove:hover {
+    color: #ff3333;
+}

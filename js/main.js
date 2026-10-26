@@ -9,6 +9,11 @@ const btnLoad = document.getElementById('btnLoad');
 const searchInput = document.getElementById('searchInput');
 const resultsGrid = document.getElementById('resultsGrid');
 const btnBrowse = document.getElementById('btnBrowse');
+const btnFav = document.getElementById('btnFav');
+const favoritesList = document.getElementById('favoritesList');
+
+// Busca os favoritos salvos na memória do navegador. Se não existir, cria um array vazio.
+let savedFavorites = JSON.parse(localStorage.getItem('jc_media_favorites')) || [];
 
 let allMediaFiles = [];
 
@@ -33,6 +38,67 @@ function lerPastaESubpastas(dirPath, arrayDeArquivos) {
     });
     return arrayDeArquivos;
 }
+
+// Função que desenha as tags dos favoritos na tela
+function renderFavorites() {
+    favoritesList.innerHTML = ''; // Limpa a área
+    
+    savedFavorites.forEach((favPath, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'fav-chip';
+        
+        // Extrai apenas o nome da pasta (ex: "Trilhas") em vez do caminho inteiro
+        const folderName = path.basename(favPath);
+        
+        // Texto clicável da tag
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'fav-name';
+        nameSpan.innerText = "📁 " + folderName;
+        nameSpan.title = favPath; // Mostra o caminho inteiro se passar o mouse por cima
+        
+        // Ao clicar no nome, ele preenche o input e já carrega os arquivos!
+        nameSpan.addEventListener('click', () => {
+            folderInput.value = favPath;
+            btnLoad.click();
+        });
+
+        // Botão de remover o favorito
+        const removeSpan = document.createElement('span');
+        removeSpan.className = 'fav-remove';
+        removeSpan.innerText = 'X';
+        removeSpan.title = "Remover dos favoritos";
+        
+        removeSpan.addEventListener('click', () => {
+            savedFavorites.splice(index, 1); // Remove da lista
+            localStorage.setItem('jc_media_favorites', JSON.stringify(savedFavorites)); // Salva no banco
+            renderFavorites(); // Redesenha a lista
+        });
+
+        chip.appendChild(nameSpan);
+        chip.appendChild(removeSpan);
+        favoritesList.appendChild(chip);
+    });
+}
+
+// Ação do botão de favoritar (Estrela)
+btnFav.addEventListener('click', () => {
+    const currentPath = folderInput.value;
+    
+    if (!currentPath || currentPath.trim() === '') {
+        alert("Selecione uma pasta primeiro clicando na pastinha ao lado!");
+        return;
+    }
+    
+    // Se a pasta ainda não está na lista de favoritos
+    if (!savedFavorites.includes(currentPath)) {
+        savedFavorites.push(currentPath);
+        localStorage.setItem('jc_media_favorites', JSON.stringify(savedFavorites));
+        renderFavorites();
+    } else {
+        alert("Esta pasta já está nos seus favoritos!");
+    }
+});
+
 
 btnBrowse.addEventListener('click', () => {
     const result = window.cep.fs.showOpenDialog(false, true, "Selecione a pasta de mídia", "", [""]);
@@ -124,3 +190,6 @@ searchInput.addEventListener('input', (e) => {
     );
     renderGrid(filteredFiles);
 });
+
+// Inicializa os favoritos quando o plugin carregar
+renderFavorites();
