@@ -29,20 +29,16 @@ function importarArquivo(caminhoDoArquivo) {
     var sequenciaAtiva = app.project.activeSequence;
     
     if (sequenciaAtiva) {
-        // Tempo atual da agulha (onde o clipe vai nascer)
         var posicaoDaAgulhaTicks = sequenciaAtiva.getPlayerPosition().ticks;
         
-        // NOVO: Lê as informações de InPoint e OutPoint do arquivo para descobrir sua Duração Real
         var duracaoClipeTicks = "0";
         if (arquivoImportado.getOutPoint) {
             var outPoint = arquivoImportado.getOutPoint();
             var inPoint = arquivoImportado.getInPoint();
-            // A duração é o Ponto de Saída menos o Ponto de Entrada (geralmente 0)
             duracaoClipeTicks = String(parseInt(outPoint.ticks, 10) - parseInt(inPoint.ticks, 10));
         }
 
         try {
-            // FUNÇÃO BLINDADA: Agora ela recebe a duração e verifica o trajeto completo
             function buscarTrackLivre(tracks, tempoAgulha, duracao) {
                 var inicioNovo = parseInt(tempoAgulha, 10);
                 var fimNovo = inicioNovo + parseInt(duracao, 10);
@@ -56,37 +52,36 @@ function importarArquivo(caminhoDoArquivo) {
                         var inicioExistente = parseInt(clip.start.ticks, 10);
                         var fimExistente = parseInt(clip.end.ticks, 10);
                         
-                        // MATEMÁTICA DE COLISÃO NA TIMELINE:
-                        // O novo clipe só atropela outro se o começo dele for ANTES do fim do outro
-                        // E o fim dele for DEPOIS do começo do outro.
                         if (inicioNovo < fimExistente && fimNovo > inicioExistente) {
                             ocupada = true;
-                            break; // Bateu em algo! Aborta essa track e vai verificar a de baixo.
+                            break; 
                         }
                     }
-                    if (!ocupada) return i; // O trajeto inteiro está livre! Retorna o número desta track.
+                    if (!ocupada) return i; 
                 }
-                return -1; // Todas as tracks têm bloqueios no caminho
+                return -1; 
             }
 
             var nomeLow = nomeDoArquivo.toLowerCase();
             var ehVideo = (nomeLow.indexOf('.mp4') !== -1 || nomeLow.indexOf('.mov') !== -1);
 
-            // Passamos a 'duracaoClipeTicks' para a função fazer o cálculo espacial
+            // CORREÇÃO AQUI: Executa a inserção apenas UMA VEZ dependendo do tipo do arquivo
             if (ehVideo) {
+                // É VÍDEO: Insere na track de vídeo (o Premiere puxará o áudio correspondente automaticamente)
                 var vTrack = buscarTrackLivre(sequenciaAtiva.videoTracks, posicaoDaAgulhaTicks, duracaoClipeTicks);
                 if (vTrack !== -1) {
                     sequenciaAtiva.videoTracks[vTrack].overwriteClip(arquivoImportado, posicaoDaAgulhaTicks);
                 } else {
                     alert("Aviso: Todas as tracks de VÍDEO têm bloqueios neste trecho!");
                 }
-            }
-
-            var aTrack = buscarTrackLivre(sequenciaAtiva.audioTracks, posicaoDaAgulhaTicks, duracaoClipeTicks);
-            if (aTrack !== -1) {
-                sequenciaAtiva.audioTracks[aTrack].overwriteClip(arquivoImportado, posicaoDaAgulhaTicks);
             } else {
-                alert("Aviso: Todas as tracks de ÁUDIO têm bloqueios neste trecho! Adicione uma nova track.");
+                // É APENAS ÁUDIO: Insere na track de áudio
+                var aTrack = buscarTrackLivre(sequenciaAtiva.audioTracks, posicaoDaAgulhaTicks, duracaoClipeTicks);
+                if (aTrack !== -1) {
+                    sequenciaAtiva.audioTracks[aTrack].overwriteClip(arquivoImportado, posicaoDaAgulhaTicks);
+                } else {
+                    alert("Aviso: Todas as tracks de ÁUDIO têm bloqueios neste trecho! Adicione uma nova track.");
+                }
             }
 
         } catch (erro) {
