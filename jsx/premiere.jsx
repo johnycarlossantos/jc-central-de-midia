@@ -1,37 +1,50 @@
 // jsx/premiere.jsx
 
 function importarArquivo(caminhoDoArquivo) {
-    // 1. Verifica se o usuário tem um projeto aberto no Premiere
     if (!app.project) {
         alert("Por favor, abra ou crie um projeto primeiro.");
         return;
     }
 
-    // 2. O Premiere exige que o caminho seja passado dentro de um Array (lista)
     var arrayDeImportacao = [caminhoDoArquivo];
     
-    // Importa o arquivo silenciosamente (sem abrir pop-up) para a pasta (bin) padrão
-    app.project.importFiles(arrayDeImportacao, 1, app.project.getInsertionBin(), 0);
+    // 1. Pega a pasta (Bin) exata onde o Premiere vai importar o arquivo
+    var binDestino = app.project.getInsertionBin();
+    
+    app.project.importFiles(arrayDeImportacao, 1, binDestino, 0);
 
-    // 3. O Premiere coloca o arquivo importado no painel "Projeto".
-    // Precisamos capturar esse arquivo (geralmente é o último item adicionado à raiz)
-    var raizDoProjeto = app.project.rootItem;
-    var arquivoImportado = raizDoProjeto.children[raizDoProjeto.numItems - 1];
+    // 2. Extrai apenas o nome do arquivo (ex: "efeito-boom.mp3") para localizá-lo
+    var nomeDoArquivo = caminhoDoArquivo.split('/').pop().split('\\').pop();
+    var arquivoImportado = null;
 
-    // 4. Verifica se o usuário tem uma Timeline (Sequência) ativa aberta
+    // 3. Procura o arquivo recém-importado dentro da pasta correta
+    for (var i = 0; i < binDestino.children.numItems; i++) {
+        if (binDestino.children[i].name === nomeDoArquivo) {
+            arquivoImportado = binDestino.children[i];
+            break;
+        }
+    }
+
+    if (!arquivoImportado) {
+        alert("Erro: Arquivo não encontrado no painel Projeto após importação.");
+        return;
+    }
+
     var sequenciaAtiva = app.project.activeSequence;
     
     if (sequenciaAtiva) {
-        // Pega a posição exata da "agulha" (playhead) na timeline
-        var posicaoDaAgulha = sequenciaAtiva.getPlayerPosition();
+        // 4. Pega o tempo da agulha e extrai os "ticks" (o formato numérico que a track entende)
+        var posicaoDaAgulha = sequenciaAtiva.getPlayerPosition().ticks;
 
-        // Verifica se o projeto tem tracks de áudio
-        if (sequenciaAtiva.audioTracks.numTracks > 0) {
-            // Insere o arquivo importado na Track de Áudio 1 (índice 0) na posição da agulha
-            // Se quiser que caia na Track 2, basta mudar para audioTracks[1]
-            sequenciaAtiva.audioTracks[0].insertClip(arquivoImportado, posicaoDaAgulha);
-        } else {
-            alert("Sua timeline não possui canais de áudio.");
+        try {
+            if (sequenciaAtiva.audioTracks.numTracks > 0) {
+                // Insere na track de Áudio 1 (índice 0)
+                sequenciaAtiva.audioTracks[0].insertClip(arquivoImportado, posicaoDaAgulha);
+            } else {
+                alert("Sua timeline não possui canais de áudio para inserir o arquivo.");
+            }
+        } catch (erro) {
+            alert("O Premiere encontrou um erro ao jogar na Timeline: " + erro.toString());
         }
     } else {
         alert("Arquivo importado para o painel Projeto! Abra uma Timeline para inseri-lo automaticamente.");
