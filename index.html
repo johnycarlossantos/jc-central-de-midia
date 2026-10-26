@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>JC Central de Mídia</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- 1. A ponte com o Premiere -->
+    <script src="js/CSInterface.js"></script>
+    <!-- 2. Nosso script lógico (faremos na Etapa 3) -->
+    <script src="js/main.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h2>JC Central de Mídia</h2>
+            <div class="config-folder">
+                <input type="text" id="folderPath" placeholder="Cole o caminho da pasta (Ex: C:\Trilhas)" />
+                <button id="btnLoad">Carregar Arquivos</button>
+            </div>
+        </header>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar música ou efeito..." />
+        </div>
+
+        <!-- Área onde o Node.js vai injetar os players HTML5 dinamicamente -->
+        <div id="resultsGrid" class="grid">
+            <p class="placeholder-text">Configure uma pasta para ver os arquivos.</p>
+        </div>
+    </div>
+</body>
+</html>
