@@ -1,59 +1,66 @@
 // js/main.js
 
-// Importa os módulos nativos do Node.js direto no painel
 const fs = require('fs');
 const path = require('path');
-
-// Inicializa a ponte de comunicação com o Premiere
 const csInterface = new CSInterface();
 
-// Captura os elementos do nosso HTML
 const folderInput = document.getElementById('folderPath');
-const btnBrowse = document.getElementById('btnBrowse');
-
-// Abre a janela do Windows/Mac para escolher a pasta
-btnBrowse.addEventListener('click', () => {
-    // Parâmetros: (MúltiplosArquivos, EscolherDiretório, Título, CaminhoInicial, TiposDeArquivo)
-    const result = window.cep.fs.showOpenDialog(false, true, "Selecione a pasta de mídia", "", [""]);
-    
-    // Se o usuário selecionou uma pasta (e não clicou em cancelar)
-    if (result.data && result.data.length > 0) {
-        folderInput.value = result.data[0]; // Preenche o input com o caminho
-        
-        // Opcional: Já simula um clique no botão "Carregar" automaticamente!
-        btnLoad.click(); 
-    }
-});
 const btnLoad = document.getElementById('btnLoad');
 const searchInput = document.getElementById('searchInput');
 const resultsGrid = document.getElementById('resultsGrid');
+const btnBrowse = document.getElementById('btnBrowse');
 
-let allMediaFiles = []; // Guarda a lista em memória para o filtro de busca
+let allMediaFiles = [];
 
-// Definimos as extensões que queremos listar
-const allowedExtensions = ['.mp3', '.wav', '.m4a', '.aac', '.mp4'];
+// Adicionamos o .mov na lista de extensões permitidas
+const allowedExtensions = ['.mp3', '.wav', '.m4a', '.aac', '.mp4', '.mov'];
 
-// 1. Ler a pasta quando clicar no botão
+// Nova função: Varre a pasta e todas as subpastas dentro dela
+function lerPastaESubpastas(dirPath, arrayDeArquivos) {
+    const arquivos = fs.readdirSync(dirPath);
+    arrayDeArquivos = arrayDeArquivos || [];
+
+    arquivos.forEach(function(arquivo) {
+        const caminhoCompleto = path.join(dirPath, arquivo);
+        
+        // Se for uma pasta, a função chama ela mesma para entrar nela
+        if (fs.statSync(caminhoCompleto).isDirectory()) {
+            arrayDeArquivos = lerPastaESubpastas(caminhoCompleto, arrayDeArquivos);
+        } else {
+            // Se for arquivo, adiciona na lista
+            arrayDeArquivos.push(caminhoCompleto);
+        }
+    });
+    return arrayDeArquivos;
+}
+
+btnBrowse.addEventListener('click', () => {
+    const result = window.cep.fs.showOpenDialog(false, true, "Selecione a pasta de mídia", "", [""]);
+    if (result.data && result.data.length > 0) {
+        folderInput.value = result.data[0];
+        btnLoad.click(); 
+    }
+});
+
 btnLoad.addEventListener('click', () => {
-    // Padroniza as barras do Windows/Mac para evitar erros de caminho
     const folderPath = folderInput.value.replace(/\\/g, '/'); 
     
     if (!folderPath || !fs.existsSync(folderPath)) {
-        resultsGrid.innerHTML = '<p class="placeholder-text">Pasta não encontrada. Cole um caminho válido do Windows.</p>';
+        resultsGrid.innerHTML = '<p class="placeholder-text">Pasta não encontrada.</p>';
         return;
     }
 
     try {
-        const files = fs.readdirSync(folderPath);
+        // Agora usamos a nossa nova função que entra em subpastas
+        const todosArquivosRaw = lerPastaESubpastas(folderPath);
         
-        // Filtra e mapeia apenas os arquivos compatíveis
-        allMediaFiles = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
+        allMediaFiles = todosArquivosRaw.filter(filePath => {
+            const ext = path.extname(filePath).toLowerCase();
             return allowedExtensions.includes(ext);
-        }).map(file => {
+        }).map(filePath => {
             return {
-                name: file,
-                fullPath: path.join(folderPath, file).replace(/\\/g, '/')
+                name: path.basename(filePath), // Pega só o nome do arquivo
+                fullPath: filePath.replace(/\\/g, '/')
             };
         });
 
@@ -64,9 +71,8 @@ btnLoad.addEventListener('click', () => {
     }
 });
 
-// 2. Desenhar os resultados na tela
 function renderGrid(filesToRender) {
-    resultsGrid.innerHTML = ''; // Limpa os resultados anteriores
+    resultsGrid.innerHTML = ''; 
 
     if (filesToRender.length === 0) {
         resultsGrid.innerHTML = '<p class="placeholder-text">Nenhum arquivo de mídia encontrado na busca.</p>';
@@ -77,10 +83,18 @@ function renderGrid(filesToRender) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'media-item';
 
-        // Cria o player nativo do HTML5
-        const player = document.createElement('audio');
+        const ext = path.extname(file.name).toLowerCase();
+        let player;
+
+        // Se for vídeo, cria a tag <video>, senão, cria <audio>
+        if (ext === '.mp4' || ext === '.mov') {
+            player = document.createElement('video');
+            player.className = 'media-video';
+        } else {
+            player = document.createElement('audio');
+        }
+        
         player.controls = true;
-        // O prefixo file:// permite que o player de HTML5 toque arquivos locais do PC
         player.src = "file://" + file.fullPath; 
 
         const titleSpan = document.createElement('span');
@@ -91,9 +105,7 @@ function renderGrid(filesToRender) {
         btnInsert.className = 'btn-insert';
         btnInsert.innerText = 'Inserir na Timeline';
         
-        // A ponte de comunicação: ao clicar, envia o caminho para o motor do Premiere
         btnInsert.addEventListener('click', () => {
-            // "importarArquivo" será o nome da função que criaremos na Etapa 4 no ExtendScript
             csInterface.evalScript(`importarArquivo("${file.fullPath}")`);
         });
 
@@ -105,14 +117,10 @@ function renderGrid(filesToRender) {
     });
 }
 
-// 3. Filtro de busca em tempo real
 searchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
-    
-    // Filtra o array principal usando o termo digitado e manda redesenhar a grid
     const filteredFiles = allMediaFiles.filter(file => 
         file.name.toLowerCase().includes(searchTerm)
     );
-    
     renderGrid(filteredFiles);
 });

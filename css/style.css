@@ -125,3 +125,12 @@ audio {
 #btnBrowse:hover {
     background-color: #444;
 }
+
+/* Limita o tamanho do player de vídeo no painel */
+.media-video {
+    width: 100%;
+    height: auto;
+    max-height: 140px; /* Mantém o vídeo pequeno */
+    background-color: #000;
+    border-radius: 4px;
+}
